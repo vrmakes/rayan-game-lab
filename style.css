@@ -1,0 +1,593 @@
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --music-button-height: 48px;
+    --music-button-bottom-offset: max(16px, env(safe-area-inset-bottom));
+    --music-button-safety-gap: 28px;
+    --music-button-reserved-space: calc(
+        var(--music-button-height) +
+        var(--music-button-bottom-offset) +
+        var(--music-button-safety-gap)
+    );
+}
+
+html,
+body {
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    background-color: purple;
+    color: white;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    padding-top: 100px;
+    padding-bottom: var(--music-button-reserved-space);
+}
+
+#click-status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    max-width: min(300px, calc(100vw - 40px));
+}
+
+#click-counter {
+    margin: 0;
+    font-size: 20px;
+}
+
+#completion-bonus-message {
+    margin: 8px 0 0;
+    padding: 7px 10px;
+    border-radius: 8px;
+    background-color: rgba(60, 0, 75, 0.92);
+    color: #ffff66;
+    font-size: clamp(16px, 3.5vw, 20px);
+    font-weight: bold;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#completion-bonus-message.show {
+    animation: completion-bonus-message 2.2s ease forwards;
+}
+
+#shop {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    width: 150px;
+    max-height: calc(100dvh - 30px);
+    overflow-y: auto;
+    padding: 12px;
+    background-color: #5c006f;
+    border: 2px solid white;
+    border-radius: 10px;
+}
+
+#shop h2,
+#shop p {
+    margin: 4px 0;
+}
+
+.shop-upgrade + .shop-upgrade {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+#shop button {
+    margin-top: 6px;
+    padding: 7px 12px;
+    font-size: 14px;
+}
+
+#shop button:disabled {
+    opacity: 0.5;
+}
+
+#all-upgrades-message {
+    margin-top: 10px;
+    color: #ffff66;
+    font-size: 14px;
+    line-height: 1.3;
+    pointer-events: none;
+}
+
+#all-upgrades-message[hidden] {
+    display: none;
+}
+
+#hidden-jewel-upgrade[hidden] {
+    display: none;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.hidden-jewel-celebration {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.hidden-jewel-confetti {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.hidden-jewel-crown {
+    position: fixed;
+    top: 18px;
+    left: calc(50% - 210px);
+    width: clamp(220px, 32vw, 420px);
+    pointer-events: none;
+    transform-origin: center top;
+    animation: royal-crown-entrance 0.9s cubic-bezier(0.2, 0.85, 0.3, 1.15) both;
+}
+
+.hidden-jewel-crown svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+.crown-points {
+    fill: url(#crown-point-gold);
+    stroke: #8d4a00;
+    stroke-width: 7;
+    stroke-linejoin: round;
+}
+
+.crown-inner-shadow {
+    fill: rgba(133, 70, 0, 0.22);
+}
+
+.crown-band {
+    fill: url(#crown-band-gold);
+    stroke: #8d4a00;
+    stroke-width: 7;
+}
+
+.crown-edge-shine {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.78);
+    stroke-width: 6;
+    stroke-linecap: round;
+}
+
+.crown-gloss {
+    fill: rgba(255, 255, 255, 0.28);
+}
+
+.crown-jewel {
+    stroke: rgba(70, 25, 55, 0.7);
+    stroke-width: 3;
+}
+
+.crown-ruby { fill: #f23b5d; }
+.crown-sapphire { fill: #287cff; }
+.crown-emerald { fill: #28c87b; }
+.crown-amethyst { fill: #9f58ed; }
+.crown-aqua { fill: #38d7e8; }
+
+.jewel-shine {
+    fill: none;
+    stroke: white;
+    stroke-width: 3;
+    stroke-linecap: round;
+    opacity: 0.9;
+}
+
+button {
+    background-color: yellow;
+    color: purple;
+    font-size: 20px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    min-height: 48px;
+}
+
+#music-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: calc(100dvh - var(--music-button-reserved-space));
+}
+
+#music-button {
+    position: fixed;
+    left: 50%;
+    bottom: var(--music-button-bottom-offset);
+    z-index: 10;
+    min-height: var(--music-button-height);
+    margin: 0;
+    transform: translateX(-50%);
+}
+
+#star-friend {
+    position: fixed;
+    left: calc(50vw - 52px);
+    top: calc(35vh - 52px);
+    z-index: 3;
+    width: 104px;
+    height: 104px;
+    pointer-events: none;
+    transform-origin: center;
+    transition: left 0.28s cubic-bezier(0.22, 0.8, 0.3, 1),
+                top 0.28s cubic-bezier(0.22, 0.8, 0.3, 1);
+}
+
+#star-friend[hidden] {
+    display: none;
+}
+
+#star-friend.star-no-transition {
+    transition: none;
+}
+
+#star-friend svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+
+.star-point,
+.star-core {
+    fill: url(#star-gold);
+}
+
+.star-outline {
+    fill: none;
+    stroke: #d68b08;
+    stroke-width: 3;
+    stroke-linejoin: round;
+}
+
+.star-edge-highlight {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.8);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.star-gloss {
+    fill: rgba(255, 255, 255, 0.28);
+}
+
+.star-eye {
+    fill: #4b2468;
+}
+
+.star-eye-shine {
+    fill: white;
+}
+
+.star-cheek {
+    fill: #f28c87;
+    opacity: 0.55;
+}
+
+.star-smile {
+    fill: none;
+    stroke: #4b2468;
+    stroke-width: 3;
+    stroke-linecap: round;
+}
+
+.star-sparkle {
+    fill: #fffbd1;
+    opacity: 0.65;
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+#star-friend.star-flying svg {
+    filter: drop-shadow(0 0 7px rgba(255, 239, 105, 0.8));
+}
+
+#star-friend.star-finale svg {
+    filter: drop-shadow(0 0 12px #fff36b) drop-shadow(0 0 20px rgba(255, 197, 46, 0.9));
+}
+
+.star-point {
+    transform-box: fill-box;
+    transform-origin: center;
+}
+
+#star-friend.star-dance {
+    animation: star-friend-dance 0.38s ease-out;
+}
+
+#star-friend.star-finale {
+    animation: star-friend-finale 0.72s ease-in-out;
+}
+
+#star-friend.star-dance .star-point-top {
+    animation: star-point-top-dance 0.38s ease-out;
+}
+
+#star-friend.star-dance .star-point-left,
+#star-friend.star-dance .star-point-bottom-left {
+    animation: star-point-left-dance 0.38s ease-out;
+}
+
+#star-friend.star-dance .star-point-right,
+#star-friend.star-dance .star-point-bottom-right {
+    animation: star-point-right-dance 0.38s ease-out;
+}
+
+#star-friend.star-finale .star-point {
+    animation: star-point-finale 0.72s ease-in-out;
+}
+
+#star-friend.star-dance .star-sparkle {
+    animation: star-sparkle-orbit 0.38s ease-out;
+}
+
+#star-friend.star-finale .star-sparkle {
+    animation: star-sparkle-burst 0.72s ease-out;
+}
+
+#lyrics {
+    position: fixed;
+    left: 189px;
+    right: 5%;
+    bottom: var(--music-button-reserved-space);
+    pointer-events: none;
+    height: min(50vh, calc(100vh - var(--music-button-reserved-space)));
+    height: min(50dvh, calc(100dvh - var(--music-button-reserved-space)));
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    gap: 0.25em 0.45em;
+    font-size: clamp(16px, 4vw, 38px);
+    line-height: 1.35;
+}
+
+.lyric-word {
+    display: inline-flex;
+}
+
+#lyrics strong {
+    background: linear-gradient(90deg, #ff4d4d, #ffff33, #33ff77, #33ddff, #6688ff, #ff66ff, #ff4d4d);
+    background-size: 300% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: rainbow-shift 0.4s linear infinite;
+}
+
+.current-word {
+    animation: word-bounce 0.4s ease;
+}
+
+#lyrics.final-bounce .lyric-word {
+    animation: final-bounce 0.5s ease 2;
+}
+
+#well-done {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--music-button-reserved-space) + 4vh);
+    max-width: 100%;
+    padding: 0 12px;
+    font-size: clamp(48px, 9vw, 100px);
+    font-weight: bold;
+    pointer-events: none;
+}
+
+#well-done.show {
+    display: block;
+    animation: flash 0.4s ease 3;
+}
+
+@keyframes word-bounce {
+    50% { transform: translateY(-12px); }
+}
+
+@keyframes rainbow-shift {
+    to { background-position: 100% 0; }
+}
+
+@keyframes final-bounce {
+    50% { transform: translateY(-14px); }
+}
+
+@keyframes flash {
+    50% { opacity: 0; }
+}
+
+@keyframes completion-bonus-message {
+    0% {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.95);
+    }
+    12%, 72% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-4px) scale(1);
+    }
+}
+
+@keyframes royal-crown-entrance {
+    0% { opacity: 0; transform: translateY(-140px) scale(0.45) rotate(-5deg); }
+    65% { opacity: 1; transform: translateY(10px) scale(1.08) rotate(2deg); }
+    82% { transform: translateY(-4px) scale(0.98) rotate(-1deg); }
+    100% { opacity: 1; transform: none; }
+}
+
+@keyframes star-friend-dance {
+    25% { transform: translateY(3px) scaleX(1.08) scaleY(0.9); }
+    55% { transform: translateY(-12px) rotate(-8deg) scaleX(0.94) scaleY(1.08); }
+    78% { transform: translateY(-4px) rotate(7deg); }
+    100% { transform: none; }
+}
+
+@keyframes star-friend-finale {
+    20% { transform: translateY(4px) scaleX(1.14) scaleY(0.86); }
+    62% { transform: translateY(-20px) rotate(300deg) scale(1.1); }
+    82% { transform: translateY(-8px) rotate(360deg) scaleX(0.94) scaleY(1.08); }
+    100% { transform: none; }
+}
+
+@keyframes star-point-top-dance {
+    50% { transform: scaleY(1.16); }
+}
+
+@keyframes star-point-left-dance {
+    50% { transform: rotate(-7deg) scale(1.08); }
+}
+
+@keyframes star-point-right-dance {
+    50% { transform: rotate(7deg) scale(1.08); }
+}
+
+@keyframes star-point-finale {
+    50% { transform: scale(1.15); }
+}
+
+@keyframes star-sparkle-orbit {
+    45% { opacity: 1; transform: translate(4px, -5px) rotate(90deg) scale(1.25); }
+    100% { opacity: 0.65; transform: translate(0) rotate(180deg); }
+}
+
+@keyframes star-sparkle-burst {
+    35% { opacity: 1; transform: translate(8px, -9px) rotate(90deg) scale(1.7); }
+    100% { opacity: 0.2; transform: translate(15px, -15px) rotate(180deg) scale(0.7); }
+}
+
+@media (max-width: 900px) {
+    body {
+        padding: 55px 12px var(--music-button-reserved-space);
+    }
+
+    #click-status {
+        top: max(12px, env(safe-area-inset-top));
+        right: max(12px, env(safe-area-inset-right));
+        max-width: min(240px, calc(100vw - 24px));
+    }
+
+    #click-counter {
+        font-size: 18px;
+    }
+
+    #shop {
+        position: static;
+        width: min(100%, 260px);
+        max-height: none;
+        overflow-y: visible;
+        margin: 0 auto 18px;
+    }
+
+    #shop button {
+        min-width: 110px;
+        min-height: 48px;
+    }
+
+    #star-friend {
+        width: 76px;
+        height: 76px;
+    }
+
+    #music-stage {
+        min-height: auto;
+    }
+
+    .hidden-jewel-crown {
+        width: min(78vw, 300px);
+    }
+
+    h1 {
+        margin-top: 12px;
+        font-size: clamp(24px, 7vw, 32px);
+    }
+
+    #lyrics {
+        position: relative;
+        left: auto;
+        right: auto;
+        bottom: auto;
+        width: 100%;
+        min-height: max(50vh, calc(100vh - var(--music-button-reserved-space) - 140px));
+        min-height: max(50dvh, calc(100dvh - var(--music-button-reserved-space) - 140px));
+        height: auto;
+        padding: 24px 0;
+        gap: 0.2em 0.35em;
+    }
+
+    #well-done {
+        font-size: clamp(36px, 11vw, 70px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hidden-jewel-crown {
+        animation-name: royal-crown-entrance-reduced;
+        animation-duration: 0.45s;
+    }
+
+    #star-friend.star-dance {
+        animation-name: star-friend-dance-reduced;
+        animation-duration: 0.22s;
+    }
+
+    #star-friend.star-finale {
+        animation-name: star-friend-finale-reduced;
+        animation-duration: 0.45s;
+    }
+
+    #star-friend.star-dance .star-point,
+    #star-friend.star-finale .star-point,
+    #star-friend.star-dance .star-sparkle,
+    #star-friend.star-finale .star-sparkle {
+        animation: none;
+    }
+}
+
+@keyframes royal-crown-entrance-reduced {
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: none; }
+}
+
+@keyframes star-friend-dance-reduced {
+    50% { transform: translateY(-3px) scale(1.02); }
+}
+
+@keyframes star-friend-finale-reduced {
+    35% { transform: translateY(2px) scaleX(1.05) scaleY(0.95); }
+    70% { transform: translateY(-8px) rotate(12deg); }
+}

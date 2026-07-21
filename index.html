@@ -1,0 +1,160 @@
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+<div id="click-status">
+    <p id="click-counter">Clicks: 0</p>
+    <p id="completion-bonus-message" role="status" aria-live="polite"></p>
+</div>
+<div id="shop">
+    <h2>Shop</h2>
+    <div class="shop-upgrade">
+        <p>Sound Bloom</p>
+        <p>30 Clicks</p>
+        <button id="purchase-harmony" onclick="purchaseHarmony()" disabled>Purchase</button>
+    </div>
+    <div class="shop-upgrade">
+        <p>Song Completion Bonus</p>
+        <p>50 Clicks</p>
+        <button id="purchase-completion-bonus" onclick="purchaseCompletionBonus()" disabled>Purchase</button>
+    </div>
+    <div class="shop-upgrade">
+        <p>Rhythm Drums</p>
+        <p>90 Clicks</p>
+        <button id="purchase-rhythm-drums" disabled>Purchase</button>
+    </div>
+    <div class="shop-upgrade">
+        <p>Twinkling Star Friend</p>
+        <p>130 Clicks</p>
+        <button id="purchase-star-friend" disabled>Purchase</button>
+        <p id="all-upgrades-message" aria-live="polite" hidden>
+            <strong>All upgrades unlocked!</strong><br>
+            You built the full musical experience… or have you? 😉
+        </p>
+    </div>
+    <div id="hidden-jewel-upgrade" class="shop-upgrade" hidden>
+        <p>Hidden Jewel</p>
+        <p>No Clicks required</p>
+        <button id="reveal-hidden-jewel">Reveal</button>
+    </div>
+</div>
+<p id="secret-reward-status" class="visually-hidden" role="status" aria-live="polite"></p>
+<h1>Welcome to Rayan's Musical Page!</h1>
+<p>(This is my first website! 😊)</p>
+<div id="music-stage">
+    <button id="music-button" onclick="launchGame()">Rayan's Music Button</button>
+    <div id="star-friend" aria-hidden="true" hidden>
+        <svg viewBox="0 0 120 120" focusable="false">
+            <defs>
+                <radialGradient id="star-gold" cx="35%" cy="25%" r="78%">
+                    <stop offset="0" stop-color="#fffbd1"></stop>
+                    <stop offset="0.28" stop-color="#fff36b"></stop>
+                    <stop offset="0.68" stop-color="#ffc52e"></stop>
+                    <stop offset="1" stop-color="#e99508"></stop>
+                </radialGradient>
+                <filter id="star-glow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur"></feGaussianBlur>
+                    <feFlood flood-color="#ffe968" flood-opacity="0.75" result="color"></feFlood>
+                    <feComposite in="color" in2="blur" operator="in" result="glow"></feComposite>
+                    <feMerge>
+                        <feMergeNode in="glow"></feMergeNode>
+                        <feMergeNode in="SourceGraphic"></feMergeNode>
+                    </feMerge>
+                </filter>
+            </defs>
+            <g class="star-shape" filter="url(#star-glow)">
+                <g class="star-point star-point-top">
+                    <polygon points="47,42 60,5 73,42"></polygon>
+                </g>
+                <g class="star-point star-point-right">
+                    <polygon points="73,42 112,43 81,66"></polygon>
+                </g>
+                <g class="star-point star-point-bottom-right">
+                    <polygon points="81,66 92,105 60,82"></polygon>
+                </g>
+                <g class="star-point star-point-bottom-left">
+                    <polygon points="60,82 28,105 39,66"></polygon>
+                </g>
+                <g class="star-point star-point-left">
+                    <polygon points="39,66 8,43 47,42"></polygon>
+                </g>
+                <polygon class="star-core" points="47,42 73,42 81,66 60,82 39,66"></polygon>
+                <polygon class="star-outline" points="60,5 73,42 112,43 81,66 92,105 60,82 28,105 39,66 8,43 47,42"></polygon>
+                <path class="star-edge-highlight" d="M12 43 L47 42 L60 9 L72 42"></path>
+                <path class="star-gloss" d="M39 43 Q53 22 69 39 Q57 43 45 59 Q38 54 39 43Z"></path>
+                <ellipse class="star-cheek" cx="43" cy="65" rx="6" ry="3.5"></ellipse>
+                <ellipse class="star-cheek" cx="77" cy="65" rx="6" ry="3.5"></ellipse>
+                <ellipse class="star-eye" cx="49" cy="54" rx="5" ry="6.5"></ellipse>
+                <ellipse class="star-eye" cx="71" cy="54" rx="5" ry="6.5"></ellipse>
+                <circle class="star-eye-shine" cx="50.5" cy="51.5" r="1.7"></circle>
+                <circle class="star-eye-shine" cx="72.5" cy="51.5" r="1.7"></circle>
+                <path class="star-smile" d="M49 65 Q60 76 71 65"></path>
+            </g>
+            <g class="star-sparkles">
+                <path class="star-sparkle sparkle-one" d="M15 21 L17 27 L23 29 L17 31 L15 37 L13 31 L7 29 L13 27Z"></path>
+                <path class="star-sparkle sparkle-two" d="M101 13 L103 18 L108 20 L103 22 L101 27 L99 22 L94 20 L99 18Z"></path>
+                <path class="star-sparkle sparkle-three" d="M106 82 L108 87 L113 89 L108 91 L106 96 L104 91 L99 89 L104 87Z"></path>
+                <circle class="star-sparkle sparkle-four" cx="15" cy="91" r="3"></circle>
+            </g>
+        </svg>
+    </div>
+</div>
+<div id="lyrics" aria-live="polite"></div>
+<div id="well-done" aria-live="polite">Well Done! 🎉</div>
+<template id="hidden-jewel-celebration-template">
+    <div class="hidden-jewel-celebration" aria-hidden="true">
+        <canvas class="hidden-jewel-confetti"></canvas>
+        <div class="hidden-jewel-crown">
+            <svg viewBox="0 0 440 250" focusable="false">
+                <defs>
+                    <linearGradient id="crown-band-gold" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#fff6a0"></stop>
+                        <stop offset="0.32" stop-color="#ffd84d"></stop>
+                        <stop offset="0.7" stop-color="#eaa20d"></stop>
+                        <stop offset="1" stop-color="#9b5600"></stop>
+                    </linearGradient>
+                    <radialGradient id="crown-point-gold" cx="35%" cy="20%" r="85%">
+                        <stop offset="0" stop-color="#fffbd3"></stop>
+                        <stop offset="0.4" stop-color="#ffd94d"></stop>
+                        <stop offset="1" stop-color="#c87900"></stop>
+                    </radialGradient>
+                    <filter id="crown-glow" x="-30%" y="-40%" width="160%" height="180%">
+                        <feGaussianBlur in="SourceAlpha" stdDeviation="7" result="blur"></feGaussianBlur>
+                        <feFlood flood-color="#ffe66d" flood-opacity="0.8" result="color"></feFlood>
+                        <feComposite in="color" in2="blur" operator="in" result="glow"></feComposite>
+                        <feMerge>
+                            <feMergeNode in="glow"></feMergeNode>
+                            <feMergeNode in="SourceGraphic"></feMergeNode>
+                        </feMerge>
+                    </filter>
+                </defs>
+                <g filter="url(#crown-glow)">
+                    <path class="crown-points" d="M38 174 L28 62 L116 126 L157 28 L220 116 L283 28 L324 126 L412 62 L402 174 Z"></path>
+                    <path class="crown-inner-shadow" d="M45 163 L38 82 L119 141 L159 50 L220 136 L281 50 L321 141 L402 82 L395 163 Z"></path>
+                    <rect class="crown-band" x="35" y="160" width="370" height="62" rx="18"></rect>
+                    <path class="crown-edge-shine" d="M49 170 Q220 144 391 170"></path>
+                    <path class="crown-gloss" d="M58 174 Q137 158 207 166 L180 185 Q112 178 62 191 Z"></path>
+                    <g class="crown-jewel crown-ruby">
+                        <path d="M205 174 L220 163 L235 174 L230 201 L210 201 Z"></path>
+                        <path class="jewel-shine" d="M214 174 L220 169 L225 174"></path>
+                    </g>
+                    <g class="crown-jewel crown-sapphire">
+                        <ellipse cx="119" cy="190" rx="17" ry="20"></ellipse>
+                        <path class="jewel-shine" d="M111 183 Q119 175 126 182"></path>
+                    </g>
+                    <g class="crown-jewel crown-emerald">
+                        <rect x="302" y="174" width="36" height="34" rx="7"></rect>
+                        <path class="jewel-shine" d="M310 183 L320 178 L329 183"></path>
+                    </g>
+                    <g class="crown-jewel crown-amethyst">
+                        <path d="M150 71 L162 49 L174 71 L162 92 Z"></path>
+                        <path class="jewel-shine" d="M158 67 L162 57 L166 67"></path>
+                    </g>
+                    <g class="crown-jewel crown-aqua">
+                        <path d="M266 71 L278 49 L290 71 L278 92 Z"></path>
+                        <path class="jewel-shine" d="M274 67 L278 57 L282 67"></path>
+                    </g>
+                </g>
+            </svg>
+        </div>
+    </div>
+</template>
+<script src="app.js"></script>
