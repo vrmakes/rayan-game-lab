@@ -49,6 +49,7 @@ let rhythmDrumsPurchased = false;
 let starFriendPurchased = false;
 let completionBonusAwardedForCurrentSong = false;
 let completionBonusMessageTimeout;
+let songResetTimeout;
 let choirEffects;
 let drumEffects;
 let starAnimationToken = 0;
@@ -78,7 +79,18 @@ async function getAudioContext() {
         audioContext = new AudioContextClass();
     }
     if (audioContext.state !== "running") {
+        try {
+            await audioContext.resume();
+        } catch (error) {
+            // A fresh context below recovers Safari contexts that cannot resume.
+        }
+    }
+    if (audioContext.state !== "running") {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioContext = new AudioContextClass();
         await audioContext.resume();
+        choirEffects = undefined;
+        drumEffects = undefined;
     }
     return audioContext;
 }
@@ -531,6 +543,12 @@ function positionHiddenJewelCrown() {
     }
 
     const crown = hiddenJewelCelebrationElement.querySelector(".hidden-jewel-crown");
+    if (window.matchMedia("(max-width: 1024px)").matches) {
+        crown.style.left = "";
+        crown.style.top = "";
+        crown.style.width = "";
+        return;
+    }
     const protectedRectangles = getHiddenJewelProtectedRectangles();
     const margin = 18;
     crown.style.width = "";
@@ -593,50 +611,24 @@ function scheduleHiddenJewelCrownPosition() {
     });
 }
 
-function resizeHiddenJewelCanvas() {
-    if (!hiddenJewelCelebrationElement) {
-        return;
-    }
-
-    const canvas = hiddenJewelCelebrationElement.querySelector(".hidden-jewel-confetti");
-    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.round(window.innerWidth * pixelRatio);
-    canvas.height = Math.round(window.innerHeight * pixelRatio);
-    canvas.getContext("2d").setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-}
-
-function createHiddenJewelConfettiParticle(startAboveViewport = false) {
+function createHiddenJewelConfettiPiece(reducedMotion = false) {
     const colors = ["#ffd84d", "#fff36b", "#f23b5d", "#287cff", "#28c87b", "#9f58ed", "#38d7e8"];
-    return {
-        x: Math.random() * window.innerWidth,
-        y: startAboveViewport ? -20 - Math.random() * window.innerHeight : Math.random() * window.innerHeight,
-        width: 5 + Math.random() * 8,
-        height: 4 + Math.random() * 7,
-        color: colors[Math.floor(Math.random() * colors.length)],
-        speed: 70 + Math.random() * 150,
-        drift: -35 + Math.random() * 70,
-        rotation: Math.random() * Math.PI * 2,
-        spin: -4 + Math.random() * 8,
-        shape: Math.floor(Math.random() * 3)
-    };
-}
-
-function drawHiddenJewelParticle(context, particle) {
-    context.save();
-    context.translate(particle.x, particle.y);
-    context.rotate(particle.rotation);
-    context.fillStyle = particle.color;
-    if (particle.shape === 1) {
-        context.beginPath();
-        context.arc(0, 0, particle.width / 2, 0, Math.PI * 2);
-        context.fill();
-    } else if (particle.shape === 2) {
-        context.rotate(Math.PI / 4);
-        context.fillRect(-particle.width / 2, -particle.height / 2, particle.width, particle.height);
-    } else {
-        context.fillRect(-particle.width / 2, -particle.height / 2, particle.width, particle.height);
-    }
-    context.restore();
+    const piece = document.createElement("span");
+    const startRotation = Math.round(Math.random() * 360);
+    const turns = 2 + Math.random() * 4;
+    piece.className = "hidden-jewel-confetti-piece";
+    piece.style.setProperty("--confetti-left", `${Math.random() * 100}%`);
+    piece.style.setProperty("--confetti-width", `${5 + Math.random() * 8}px`);
+    piece.style.setProperty("--confetti-height", `${5 + Math.random() * 9}px`);
+    piece.style.setProperty("--confetti-radius", Math.random() > 0.72 ? "50%" : "1px");
+    piece.style.setProperty("--confetti-color", colors[Math.floor(Math.random() * colors.length)]);
+    piece.style.setProperty("--confetti-drift", `${-60 + Math.random() * 120}px`);
+    piece.style.setProperty("--confetti-start-rotation", `${startRotation}deg`);
+    piece.style.setProperty("--confetti-end-rotation", `${startRotation + turns * 360}deg`);
+    piece.style.setProperty("--confetti-duration", `${2.3 + Math.random() * 2.2}s`);
+    piece.style.setProperty("--confetti-delay", `${reducedMotion ? Math.random() * 0.15 : Math.random() * 1.4}s`);
+    piece.addEventListener("animationend", () => piece.remove(), { once: true });
+    return piece;
 }
 
 function cleanupHiddenJewelCelebration() {
@@ -650,8 +642,6 @@ function cleanupHiddenJewelCelebration() {
     window.removeEventListener("orientationchange", handleHiddenJewelCelebrationResize);
     window.removeEventListener("scroll", scheduleHiddenJewelCrownPosition);
     if (hiddenJewelCelebrationElement) {
-        const canvas = hiddenJewelCelebrationElement.querySelector(".hidden-jewel-confetti");
-        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
         hiddenJewelCelebrationElement.remove();
     }
     hiddenJewelAnimationFrame = undefined;
@@ -661,27 +651,8 @@ function cleanupHiddenJewelCelebration() {
     hiddenJewelConfetti = [];
 }
 
-function drawSettledHiddenJewelConfetti() {
-    if (!hiddenJewelCelebrationElement) {
-        return;
-    }
-
-    const canvas = hiddenJewelCelebrationElement.querySelector(".hidden-jewel-confetti");
-    const context = canvas.getContext("2d");
-    context.clearRect(0, 0, window.innerWidth, window.innerHeight);
-    hiddenJewelConfetti.forEach((particle) => {
-        particle.x = ((particle.x % window.innerWidth) + window.innerWidth) % window.innerWidth;
-        particle.y = ((particle.y % window.innerHeight) + window.innerHeight) % window.innerHeight;
-        drawHiddenJewelParticle(context, particle);
-    });
-}
-
 function handleHiddenJewelCelebrationResize() {
-    resizeHiddenJewelCanvas();
     scheduleHiddenJewelCrownPosition();
-    if (hiddenJewelCelebrationSettled) {
-        drawSettledHiddenJewelConfetti();
-    }
 }
 
 function startHiddenJewelCelebration() {
@@ -690,56 +661,27 @@ function startHiddenJewelCelebration() {
     const fragment = template.content.cloneNode(true);
     hiddenJewelCelebrationElement = fragment.querySelector(".hidden-jewel-celebration");
     document.body.appendChild(hiddenJewelCelebrationElement);
-    resizeHiddenJewelCanvas();
     positionHiddenJewelCrown();
     window.addEventListener("resize", handleHiddenJewelCelebrationResize);
     window.addEventListener("orientationchange", handleHiddenJewelCelebrationResize);
     window.addEventListener("scroll", scheduleHiddenJewelCrownPosition, { passive: true });
 
-    const canvas = hiddenJewelCelebrationElement.querySelector(".hidden-jewel-confetti");
-    const context = canvas.getContext("2d");
+    const confetti = hiddenJewelCelebrationElement.querySelector(".hidden-jewel-confetti");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     hiddenJewelCelebrationStartedAt = performance.now();
-    hiddenJewelCelebrationSettled = reducedMotion;
-
-    if (reducedMotion) {
-        hiddenJewelConfetti = Array.from(
-            { length: REDUCED_MOTION_CONFETTI_LIMIT },
-            () => createHiddenJewelConfettiParticle()
-        );
-        context.clearRect(0, 0, window.innerWidth, window.innerHeight);
-        hiddenJewelConfetti.forEach((particle) => drawHiddenJewelParticle(context, particle));
-    } else {
-        const particleCount = window.innerWidth <= 800
+    hiddenJewelCelebrationSettled = false;
+    const particleCount = reducedMotion
+        ? REDUCED_MOTION_CONFETTI_LIMIT
+        : window.innerWidth <= 800
             ? PHONE_CONFETTI_LIMIT
             : DESKTOP_CONFETTI_LIMIT;
-        hiddenJewelConfetti = Array.from(
-            { length: particleCount },
-            () => createHiddenJewelConfettiParticle()
-        );
-        let previousTime = hiddenJewelCelebrationStartedAt;
-        const animateConfetti = (currentTime) => {
-            const elapsedSeconds = Math.min((currentTime - previousTime) / 1000, 0.05);
-            previousTime = currentTime;
-            context.clearRect(0, 0, window.innerWidth, window.innerHeight);
-            hiddenJewelConfetti.forEach((particle) => {
-                particle.x += particle.drift * elapsedSeconds;
-                particle.y += particle.speed * elapsedSeconds;
-                particle.rotation += particle.spin * elapsedSeconds;
-                if (particle.y > window.innerHeight + 20) {
-                    Object.assign(particle, createHiddenJewelConfettiParticle(true));
-                }
-                if (particle.x < -20) {
-                    particle.x = window.innerWidth + 20;
-                } else if (particle.x > window.innerWidth + 20) {
-                    particle.x = -20;
-                }
-                drawHiddenJewelParticle(context, particle);
-            });
-            hiddenJewelAnimationFrame = requestAnimationFrame(animateConfetti);
-        };
-        hiddenJewelAnimationFrame = requestAnimationFrame(animateConfetti);
-    }
+    const fragmentPieces = document.createDocumentFragment();
+    hiddenJewelConfetti = Array.from({ length: particleCount }, () => {
+        const piece = createHiddenJewelConfettiPiece(reducedMotion);
+        fragmentPieces.appendChild(piece);
+        return piece;
+    });
+    confetti.appendChild(fragmentPieces);
 }
 
 function getCheerNoiseBuffer(audio) {
@@ -930,7 +872,8 @@ function finishSong(audio) {
     });
     lyricsBox.classList.add("final-bounce");
 
-    setTimeout(() => {
+    clearTimeout(songResetTimeout);
+    songResetTimeout = setTimeout(() => {
         lyricsBox.replaceChildren();
         lyricsBox.classList.remove("final-bounce");
         const wellDone = document.getElementById("well-done");
@@ -945,7 +888,22 @@ function finishSong(audio) {
         completionBonusAwardedForCurrentSong = false;
         endingSong = false;
         button.disabled = false;
+        songResetTimeout = undefined;
     }, 1000);
+}
+
+function resetSongForReplay() {
+    clearTimeout(songResetTimeout);
+    songResetTimeout = undefined;
+    melodyPosition = 0;
+    shownWordIndex = -1;
+    endingSong = false;
+    completionBonusAwardedForCurrentSong = false;
+
+    const lyricsBox = document.getElementById("lyrics");
+    lyricsBox.replaceChildren();
+    lyricsBox.classList.remove("final-bounce");
+    document.getElementById("well-done").classList.remove("show");
 }
 
 function getChoirEffects(audio) {
@@ -1258,9 +1216,14 @@ async function launchGame() {
     }
 
     const button = document.getElementById("music-button");
+    const audioReady = getAudioContext();
     button.disabled = true;
-    const audio = await getAudioContext();
+    const audio = await audioReady;
     button.disabled = false;
+
+    if (melodyPosition === 0) {
+        resetSongForReplay();
+    }
     const sound = audio.createOscillator();
     const soundVolume = audio.createGain();
 
