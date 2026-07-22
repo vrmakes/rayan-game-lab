@@ -243,6 +243,10 @@ button {
     min-height: var(--music-button-height);
     margin: 0;
     transform: translateX(-50%);
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 #star-friend {
